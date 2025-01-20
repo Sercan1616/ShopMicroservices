@@ -1,0 +1,55 @@
+// Hangi protobuf sürümlerini kullandýðýmýz belirtilir.
+syntax="proto3";
+
+// Csharp dosyalarýnýn oluþmasýný söyler.
+option csharp_namespace = "Discount.Grpc";
+
+package discount;
+
+// Discount CRUD iþlemleri için kullanýlacak olan request ve response modelleri
+service DiscountProtoService {
+	// Discount CRUD iþlemleri
+	rpc GetDiscount(GetDiscountRequest) returns (CouponModel);
+	rpc CreateDiscount(CreateDiscountRequest) returns (CouponModel);
+	rpc UpdateDiscount(UpdateDiscountRequest) returns (CouponModel);
+	rpc DeleteDiscount(DeleteDiscountRequest) returns (DeleteDiscountResponse);
+}
+
+// Discount bilgilerini getirirken kullanýlacak olan request modeli
+message GetDiscountRequest {
+	// Discount Id
+	string productName = 1;
+}
+
+// Discount bilgilerini getirirken kullanýlacak olan response modeli
+message CouponModel {
+	// Discount Id
+	int32 id = 1;
+	// Product Name
+	string productName = 2;
+	// Discount Name
+	string description = 3;
+	// Discount Rate
+	double amount = 4;
+}
+
+// Discount oluþtururken kullanýlacak olan request modeli
+message CreateDiscountRequest {
+	CouponModel coupon = 1;
+}
+
+// Discount güncellerken kullanýlacak olan request modeli
+message UpdateDiscountRequest {
+	CouponModel coupon = 1;
+}
+
+// Discount silerken kullanýlacak olan request modeli
+	message DeleteDiscountRequest {
+	string productName = 1;
+}
+
+// Discount silerken kullanýlacak olan response modeli
+message DeleteDiscountResponse {
+	// Discount silindi mi?
+	bool success = 1;
+}
