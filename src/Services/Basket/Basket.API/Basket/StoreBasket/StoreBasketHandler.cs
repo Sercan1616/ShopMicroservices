@@ -1,4 +1,6 @@
-﻿namespace Basket.API.Basket.StoreBasket;
+﻿using Discount.Grpc;
+
+namespace Basket.API.Basket.StoreBasket;
 
 // Endpoint class'ındaki Request nesnesine karşılık gelen command nesnesi. Parametleri aynı.
 public record StoreBasketCommand(ShoppingCart Cart) : ICommand<StoreBasketResult>;
@@ -14,15 +16,25 @@ public class StoreBasketCommandValidator : AbstractValidator<StoreBasketCommand>
         RuleFor(x => x.Cart.UserName).NotEmpty().WithMessage("Cart must have a UserName");
     }
 }
-public class StoreBasketCommandHandler(IBasketRepository basketRepository)
+public class StoreBasketCommandHandler(IBasketRepository basketRepository, DiscountProtoService.DiscountProtoServiceClient discountProto)
     : ICommandHandler<StoreBasketCommand, StoreBasketResult>
 {
     public async Task<StoreBasketResult> Handle(StoreBasketCommand command, CancellationToken cancellationToken)
     {
-        ShoppingCart cart = command.Cart;
+        await DeductDiscount(command.Cart, cancellationToken);
 
-        await basketRepository.StoreBasket(cart, cancellationToken);
+        await basketRepository.StoreBasket(command.Cart, cancellationToken);
 
-        return new StoreBasketResult(cart.UserName);
+        return new StoreBasketResult(command.Cart.UserName);
+    }
+
+    private async Task DeductDiscount(ShoppingCart cart, CancellationToken cancellationToken)
+    {
+        // Communicate with Discount.Grpc and calculate lastest prices of products into sc
+        foreach (var item in cart.Items)
+        {
+            var coupon = await discountProto.GetDiscountAsync(new GetDiscountRequest { ProductName = item.ProductName }, cancellationToken: cancellationToken);
+            item.Price -= (decimal)coupon.Amount;
+        }
     }
 }
